@@ -28,7 +28,8 @@ class DataService {
 
     func addPosttoFirebase(withMessage message: String, userID uid: String, groupID: String?, sendComplete: @escaping (_ status: Bool) -> ()) {
         if groupID != nil {
-            //send to group
+            _DataBaseRef_groups.child(groupID!).child("message").childByAutoId().updateChildValues(["content" : message, "senderID" : uid])
+            sendComplete(true)
         } else {
             _DataBaseRef_feed.childByAutoId().updateChildValues(["content" :message, "senderID" :uid])
             sendComplete(true)
@@ -55,6 +56,21 @@ class DataService {
         
     }//end get all messages
     
+    func getMessage(forGroup group: Group, completed: @escaping (_ message: [Message]) -> ()) {
+    var groupMessages = [Message]()
+        _DataBaseRef_groups.child(group.groupID).child("message").observeSingleEvent(of: .value) { (groupMessageSnap) in
+            guard let groupMessageSnap = groupMessageSnap.children.allObjects as? [DataSnapshot] else {return}
+            
+            for groupMessage in groupMessageSnap {
+                let content = groupMessage.childSnapshot(forPath: "content").value as! String
+                let  senderID = groupMessage.childSnapshot(forPath: "senderID").value as! String
+                
+                let message = Message(senderID: senderID, messageContent: content)
+                groupMessages.append(message)
+            }
+            completed(groupMessages)
+        }
+    }
     
     func getUserName(uid: String, completed: @escaping (_ username: String) -> ()) {
         _DataBaseRef_users.observeSingleEvent(of: .value) { (UserSnapShot) in
@@ -108,6 +124,20 @@ class DataService {
         }
         
     }//--end get iD
+    
+    func getEmails(forGroups group: Group, completed: @escaping (_ emails: [String]) -> ()) {
+        var emailArray = [String]()
+        _DataBaseRef_users.observeSingleEvent(of: .value) { (groupSnapShot) in
+            guard let groupSnapShot = groupSnapShot.children.allObjects as? [DataSnapshot] else {return}
+            for user in groupSnapShot {
+                if group.groupMembers.contains(user.key) {
+                    let emails = user.childSnapshot(forPath: "email").value as! String
+                    emailArray.append(emails)
+                }
+            }
+            completed(emailArray)
+        }
+    }
    
     func createGroup(withTitle Title: String, andDescription description: String, containing members: [String], completed: @escaping (_ GroupCreated: Bool) -> ()) {
         _DataBaseRef_groups.childByAutoId().updateChildValues(["name": Title, "description": description, "members" : members])

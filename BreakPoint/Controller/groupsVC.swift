@@ -19,13 +19,21 @@ class groupsVC: UIViewController, UITableViewDelegate, UITableViewDataSource {
         
         tableView.delegate = self
         tableView.dataSource = self
-        
-        DataService.instance.getAllGroups { (Groups) in
-             self.GroupList = Groups
-            self.tableView.reloadData()
-        }
-
     }//--End view did load
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        
+    /// loads and Tracks updates for groups
+
+        DataService.instance._DataBaseRef_groups.observe(.value) { (snapShot) in
+            DataService.instance.getAllGroups { (Groups) in
+                self.GroupList = Groups
+                self.tableView.reloadData()
+            }
+        }
+        
+    }
     
 //--Protocol function
     
@@ -40,6 +48,12 @@ class groupsVC: UIViewController, UITableViewDelegate, UITableViewDataSource {
         let group = GroupList[indexPath.row]
         cell.updateCell(group: group)
         return cell
+    }
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        guard let groupFeedVC = storyboard?.instantiateViewController(withIdentifier: "groupFeedVC") as? groupFeedVC else {return}
+        let group = GroupList[indexPath.row]
+        groupFeedVC.initData(forGroup: group)
+        present(groupFeedVC, animated: true, completion: nil)
     }
 
 
