@@ -112,6 +112,27 @@ class DataService {
     func createGroup(withTitle Title: String, andDescription description: String, containing members: [String], completed: @escaping (_ GroupCreated: Bool) -> ()) {
         _DataBaseRef_groups.childByAutoId().updateChildValues(["name": Title, "description": description, "members" : members])
         completed(true)
+    }//end create gtoup
+    
+    
+    func getAllGroups(completed: @escaping (_ groupArray: [Group]) -> ()) {
+        var groupArray = [Group]()
+        _DataBaseRef_groups.observe(.value) { (groupSnapShot) in
+            guard let groupSnapShot = groupSnapShot.children.allObjects as? [DataSnapshot] else {return}
+            
+            for group in groupSnapShot {
+                let memberArray = group.childSnapshot(forPath: "members").value as! [String]
+        
+                if memberArray.contains((Auth.auth().currentUser?.uid)!) {
+                    let title  = group.childSnapshot(forPath: "name").value as! String
+                    let description = group.childSnapshot(forPath: "description").value as! String
+                    
+                    let groups = Group(Title: title, description: description, ID: group.key, memberCount: memberArray.count, members: memberArray)
+                    groupArray.append(groups)
+                }
+            }
+            completed(groupArray)
+        }
     }
     
     

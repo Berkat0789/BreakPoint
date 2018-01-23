@@ -15,9 +15,9 @@ class groupCell: UITableViewCell {
     @IBOutlet weak var memberCellcount: UILabel!
     
     
-    func updateCell (title: String, descriptions: String, members: Int)  {
-        self.groupTitleLbl.text = title
-        self.groupDescriptionlbl.text = descriptions
-        self.memberCellcount.text = "\(members) Members"
+    func updateCell (group: Group)  {
+        self.groupTitleLbl.text = group.groupTitle
+        self.groupDescriptionlbl.text = group.groupDescription
+        self.memberCellcount.text = "\(group.groupMemberCount!) Members"
     }
 }
